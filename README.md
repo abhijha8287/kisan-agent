@@ -8,6 +8,8 @@ short plan the farmer can act on today, with sources.
 It runs on NVIDIA Nemotron models served by Nebius Token Factory, with live web research from
 Tavily.
 
+**Live demo:** https://abhijha8287-kisan-agent.hf.space
+
 ## The problem
 
 India alone has more than 100 million smallholder farms. When a crop shows disease, the farmer
@@ -81,7 +83,7 @@ Chemical recommendations must include active ingredient, dose per litre and safe
 │           └── image.js      Client-side photo downscaling before upload
 ├── tests/                    Unit and API tests, using in-memory fakes for both services
 ├── deploy/huggingface/       Entry point, Space header and script for Hugging Face Spaces
-├── Dockerfile                Container image for Nebius Serverless Endpoints
+├── Dockerfile                Container image, for hosts that run containers
 ├── pyproject.toml            Dependencies and tool configuration
 └── .env.example              Template for local configuration
 ```
@@ -176,19 +178,10 @@ use in-memory fakes and make no network calls.
 
 ## Deploying
 
-The app is a single stateless process, so it can run on free or CPU-only hosting.
-
-### Hugging Face Spaces
-
-The Space uses the Gradio SDK only as a Python runtime: it installs `requirements.txt` and
-runs `app.py` on port 7860, and `app.py` starts the regular FastAPI app. Free accounts can run
-Python Spaces only on ZeroGPU hardware, which will not start until a `@spaces.GPU` function is
-reported from a Gradio launch. Since all inference runs on Token Factory, `app.py` defines a
-placeholder GPU function that is never called and launches an empty Gradio app on a
-loopback-only port to send that report.
+The live demo runs on Hugging Face Spaces.
 
 1. Create a Space at https://huggingface.co/new-space with the **Gradio** SDK, **Blank**
-   template and **ZeroGPU** hardware.
+   template and **ZeroGPU** hardware (the only Python option on a free account).
 2. In the Space settings, add `NEBIUS_API_KEY` and `TAVILY_API_KEY` as **secrets**.
 3. Authenticate once with `hf auth login`, then run:
 
@@ -196,34 +189,9 @@ loopback-only port to send that report.
 deploy/huggingface/deploy.sh <hf-username>/<space-name>
 ```
 
-The script pushes the current commit to the Space and adds the Space-only files (`app.py`,
-`requirements.txt` generated from `pyproject.toml`, and the configuration header in `README.md`) to
-the copy it pushes, so they do not clutter the repository.
-
-### Nebius Serverless Endpoints
-
-The app needs only a CPU endpoint.
-
-```bash
-docker build --platform linux/amd64 -t <registry>/kisan-agent:0.1.0 .
-docker push <registry>/kisan-agent:0.1.0
-
-nebius ai endpoint create \
-  --name kisan-agent \
-  --image <registry>/kisan-agent:0.1.0 \
-  --platform cpu-d3 \
-  --preset 4vcpu-16gb \
-  --container-port 8000 \
-  --env "NEBIUS_API_KEY=<key>,TAVILY_API_KEY=<key>" \
-  --public \
-  --subnet-id <subnet_id>
-```
-
-For a production deployment, store the keys in Nebius MysteryBox and pass them with
-`--env-secret` instead of `--env`. Authentication is left off so the web interface is publicly
-reachable. See the
-[Nebius Serverless Endpoints documentation](https://docs.nebius.com/serverless/quickstart/endpoints)
-for registry setup and the available platforms and presets.
+The script uploads the latest commit together with the Space-only files, which are kept out of
+the repository. No GPU is used: all inference runs on Token Factory. See
+`deploy/huggingface/app.py` for how the app satisfies ZeroGPU's startup check.
 
 ## Use of NVIDIA and Nebius technology
 
@@ -234,7 +202,6 @@ for registry setup and the available platforms and presets.
 - **NVIDIA Nemotron 3.5 Super VL** performs the photo diagnosis.
 - **Nebius Token Factory** serves all three through one OpenAI-compatible endpoint, so routing
   between models is a change of model name, not a change of client or provider.
-- **Nebius Serverless Endpoints** host the application container.
 
 ## Limitations
 
