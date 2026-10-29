@@ -182,8 +182,10 @@ The app is a single stateless process, so it can run on free or CPU-only hosting
 
 The Space uses the Gradio SDK only as a Python runtime: it installs `requirements.txt` and
 runs `app.py` on port 7860, and `app.py` starts the regular FastAPI app. Free accounts can run
-Python Spaces only on ZeroGPU hardware, which requires one `@spaces.GPU` function; `app.py`
-defines a placeholder that is never called, since all inference runs on Token Factory.
+Python Spaces only on ZeroGPU hardware, which will not start until a `@spaces.GPU` function is
+reported from a Gradio launch. Since all inference runs on Token Factory, `app.py` defines a
+placeholder GPU function that is never called and launches an empty Gradio app on a
+loopback-only port to send that report.
 
 1. Create a Space at https://huggingface.co/new-space with the **Gradio** SDK, **Blank**
    template and **ZeroGPU** hardware.
