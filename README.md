@@ -180,11 +180,13 @@ The app is a single stateless process, so it can run on free or CPU-only hosting
 
 ### Hugging Face Spaces
 
-Free Spaces use the Gradio SDK, which here serves only as a Python runtime: it installs
-`requirements.txt` and runs `app.py` on port 7860, and `app.py` starts the regular FastAPI app.
+The Space uses the Gradio SDK only as a Python runtime: it installs `requirements.txt` and
+runs `app.py` on port 7860, and `app.py` starts the regular FastAPI app. Free accounts can run
+Python Spaces only on ZeroGPU hardware, which requires one `@spaces.GPU` function; `app.py`
+defines a placeholder that is never called, since all inference runs on Token Factory.
 
 1. Create a Space at https://huggingface.co/new-space with the **Gradio** SDK, **Blank**
-   template and free CPU hardware.
+   template and **ZeroGPU** hardware.
 2. In the Space settings, add `NEBIUS_API_KEY` and `TAVILY_API_KEY` as **secrets**.
 3. Authenticate once with `hf auth login`, then run:
 
