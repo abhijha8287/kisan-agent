@@ -186,14 +186,14 @@ Free Spaces use the Gradio SDK, which here serves only as a Python runtime: it i
 1. Create a Space at https://huggingface.co/new-space with the **Gradio** SDK, **Blank**
    template and free CPU hardware.
 2. In the Space settings, add `NEBIUS_API_KEY` and `TAVILY_API_KEY` as **secrets**.
-3. Authenticate once with `hf auth login --add-to-git-credential`, then run:
+3. Authenticate once with `hf auth login`, then run:
 
 ```bash
 deploy/huggingface/deploy.sh <hf-username>/<space-name>
 ```
 
 The script pushes the current commit to the Space and adds the Space-only files (`app.py`,
-`requirements.txt` exported from `uv.lock`, and the configuration header in `README.md`) to
+`requirements.txt` generated from `pyproject.toml`, and the configuration header in `README.md`) to
 the copy it pushes, so they do not clutter the repository.
 
 ### Nebius Serverless Endpoints

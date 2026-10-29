@@ -6,6 +6,8 @@
 # repository clean, the entry point, requirements and front matter are added only to the
 # copy pushed to the Space.
 #
+# Requires a prior `hf auth login`.
+#
 # Usage: deploy/huggingface/deploy.sh <hf-username>/<space-name>
 set -euo pipefail
 
@@ -18,11 +20,12 @@ trap 'rm -rf "$WORK"' EXIT
 git -C "$ROOT" archive HEAD | tar -x -C "$WORK"
 cat "$HERE/space-header.md" "$ROOT/README.md" > "$WORK/README.md"
 cp "$HERE/app.py" "$WORK/app.py"
-(cd "$ROOT" && uv export --frozen --no-dev --no-hashes --no-emit-project --quiet) \
-  > "$WORK/requirements.txt"
+# Direct dependencies with their version ranges, not exact pins: the Space installs Gradio
+# alongside them, and pip must be free to pick versions compatible with both.
+python3 -c 'import sys, tomllib; print("\n".join(tomllib.load(sys.stdin.buffer)["project"]["dependencies"]))' \
+  < "$ROOT/pyproject.toml" > "$WORK/requirements.txt"
 
-cd "$WORK"
-git init -q -b main
-git add -A
-git commit -q -m "Deploy $(git -C "$ROOT" rev-parse --short HEAD)"
-git push --force "https://huggingface.co/spaces/$SPACE" main
+hf upload "$SPACE" "$WORK" . \
+  --repo-type space \
+  --delete "*" \
+  --commit-message "Deploy $(git -C "$ROOT" rev-parse --short HEAD)"
