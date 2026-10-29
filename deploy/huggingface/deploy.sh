@@ -1,20 +1,25 @@
 #!/usr/bin/env bash
-# Publishes the current commit to a Hugging Face Space that uses the Docker SDK.
+# Publishes the current commit to a Hugging Face Space.
 #
-# Spaces read their configuration from YAML front matter in README.md. To keep the
-# repository README clean, the front matter is added only to the copy pushed to the Space.
+# Free Spaces use the Gradio SDK, which installs requirements.txt and runs app.py on
+# port 7860. The Space configuration lives in YAML front matter in README.md. To keep the
+# repository clean, the entry point, requirements and front matter are added only to the
+# copy pushed to the Space.
 #
 # Usage: deploy/huggingface/deploy.sh <hf-username>/<space-name>
 set -euo pipefail
 
 SPACE="${1:?usage: $0 <hf-username>/<space-name>}"
 ROOT="$(git rev-parse --show-toplevel)"
-HEADER="$ROOT/deploy/huggingface/space-header.md"
+HERE="$ROOT/deploy/huggingface"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 git -C "$ROOT" archive HEAD | tar -x -C "$WORK"
-cat "$HEADER" "$ROOT/README.md" > "$WORK/README.md"
+cat "$HERE/space-header.md" "$ROOT/README.md" > "$WORK/README.md"
+cp "$HERE/app.py" "$WORK/app.py"
+(cd "$ROOT" && uv export --frozen --no-dev --no-hashes --no-emit-project --quiet) \
+  > "$WORK/requirements.txt"
 
 cd "$WORK"
 git init -q -b main

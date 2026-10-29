@@ -80,8 +80,8 @@ Chemical recommendations must include active ingredient, dose per litre and safe
 │           ├── markdown.js   Renderer for the advice text and citation links
 │           └── image.js      Client-side photo downscaling before upload
 ├── tests/                    Unit and API tests, using in-memory fakes for both services
-├── deploy/huggingface/       Script and Space header for publishing to Hugging Face Spaces
-├── Dockerfile                Container image, used by both deployment targets
+├── deploy/huggingface/       Entry point, Space header and script for Hugging Face Spaces
+├── Dockerfile                Container image for Nebius Serverless Endpoints
 ├── pyproject.toml            Dependencies and tool configuration
 └── .env.example              Template for local configuration
 ```
@@ -176,12 +176,15 @@ use in-memory fakes and make no network calls.
 
 ## Deploying
 
-The app is a single stateless container listening on port 8000. The same Dockerfile is used
-for both targets below.
+The app is a single stateless process, so it can run on free or CPU-only hosting.
 
 ### Hugging Face Spaces
 
-1. Create a Space with the **Docker** SDK at https://huggingface.co/new-space.
+Free Spaces use the Gradio SDK, which here serves only as a Python runtime: it installs
+`requirements.txt` and runs `app.py` on port 7860, and `app.py` starts the regular FastAPI app.
+
+1. Create a Space at https://huggingface.co/new-space with the **Gradio** SDK, **Blank**
+   template and free CPU hardware.
 2. In the Space settings, add `NEBIUS_API_KEY` and `TAVILY_API_KEY` as **secrets**.
 3. Authenticate once with `hf auth login --add-to-git-credential`, then run:
 
@@ -189,8 +192,9 @@ for both targets below.
 deploy/huggingface/deploy.sh <hf-username>/<space-name>
 ```
 
-The script pushes the current commit to the Space, adding the Space configuration header to
-the README copy it pushes. The Space then builds the image and serves the app.
+The script pushes the current commit to the Space and adds the Space-only files (`app.py`,
+`requirements.txt` exported from `uv.lock`, and the configuration header in `README.md`) to
+the copy it pushes, so they do not clutter the repository.
 
 ### Nebius Serverless Endpoints
 
