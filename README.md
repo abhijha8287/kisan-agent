@@ -80,7 +80,8 @@ Chemical recommendations must include active ingredient, dose per litre and safe
 │           ├── markdown.js   Renderer for the advice text and citation links
 │           └── image.js      Client-side photo downscaling before upload
 ├── tests/                    Unit and API tests, using in-memory fakes for both services
-├── Dockerfile                Container image for Nebius Serverless Endpoints
+├── deploy/huggingface/       Script and Space header for publishing to Hugging Face Spaces
+├── Dockerfile                Container image, used by both deployment targets
 ├── pyproject.toml            Dependencies and tool configuration
 └── .env.example              Template for local configuration
 ```
@@ -173,9 +174,27 @@ The tests cover the pipeline's routing and every fallback path, model-output par
 reasoning tags split across stream chunks), and the HTTP layer's validation and streaming. They
 use in-memory fakes and make no network calls.
 
-## Deploying to Nebius Serverless Endpoints
+## Deploying
 
-The app is a single stateless container listening on port 8000, so it needs only a CPU endpoint.
+The app is a single stateless container listening on port 8000. The same Dockerfile is used
+for both targets below.
+
+### Hugging Face Spaces
+
+1. Create a Space with the **Docker** SDK at https://huggingface.co/new-space.
+2. In the Space settings, add `NEBIUS_API_KEY` and `TAVILY_API_KEY` as **secrets**.
+3. Authenticate once with `hf auth login --add-to-git-credential`, then run:
+
+```bash
+deploy/huggingface/deploy.sh <hf-username>/<space-name>
+```
+
+The script pushes the current commit to the Space, adding the Space configuration header to
+the README copy it pushes. The Space then builds the image and serves the app.
+
+### Nebius Serverless Endpoints
+
+The app needs only a CPU endpoint.
 
 ```bash
 docker build --platform linux/amd64 -t <registry>/kisan-agent:0.1.0 .

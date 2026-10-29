@@ -16,7 +16,7 @@ COPY src ./src
 COPY web ./web
 RUN uv sync --frozen --no-dev
 
-RUN useradd --create-home --uid 10001 app
+RUN useradd --create-home --uid 1000 app
 USER app
 
 EXPOSE 8000
