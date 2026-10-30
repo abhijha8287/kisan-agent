@@ -10,6 +10,8 @@ Tavily.
 
 **Live demo:** https://abhijha8287-kisan-agent.hf.space
 
+**Demo video:** https://youtu.be/ZgYz0DvYUd4
+
 ## The problem
 
 India alone has more than 100 million smallholder farms. When a crop shows disease, the farmer
